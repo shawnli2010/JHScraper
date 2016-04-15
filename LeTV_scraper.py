@@ -1,3 +1,5 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 import urllib2
 from BeautifulSoup import BeautifulSoup
 from selenium import webdriver
@@ -7,21 +9,35 @@ import time
 import MySQLdb
 import traceback
 
-db = MySQLdb.connect("localhost","root","0924xiaopan","JHSDB" )
+db = MySQLdb.connect("localhost","username","password","JHSDB" )
 db_cursor = db.cursor()
-
-'''Create the table, should be executed only once'''
-create_grade_distribution_table_sql = """CREATE TABLE LETV_MOVIE(
-                                        ID INT(11),
-                                        MOVIE_NAME CHAR(255), 
-                                        MOVIE_SCORE DOUBLE(2,1), 
-                                        MOVIE_VIEWS INT(11) )"""
-# db_cursor.execute(create_grade_distribution_table_sql)
-
+db_cursor.execute("SET NAMES UTF8")
 
 url = "http://list.le.com/listn/c1_t-1_a-1_y-1_s1_lg-1_ph-1_md_o3_d1_p.html"
 chromedriver = webdriver.Chrome()
 chromedriver.get(url)
+
+
+#***************************************************************************#
+#****** Database schema to create the table I use in mysql        **********#
+#***************************************************************************#
+
+####### QUERY #######
+'''Create the LeTV_Movie table'''
+create_letv_movie_table_sql = """CREATE TABLE LETV_MOVIE(
+                                        ID INT(11),
+                                        MOVIE_NAME CHAR(255), 
+                                        MOVIE_SCORE DOUBLE(2,1), 
+                                        MOVIE_VIEWS INT(11) )
+                                        ENGINE=InnoDB CHARACTER SET=utf8;"""
+####### EXECTUION #######
+'''Should execute only once to create the table'''
+# db_cursor.execute(create_letv_movie_table_sql)
+
+
+#***************************************************************************#
+#****** Keep scrolling the page to the bottom to load more movies **********#
+#***************************************************************************#
 
 '''Initial wait to load the initial set of movies before the first scroll'''
 time.sleep(2.0)
@@ -30,17 +46,16 @@ while(True):
        to load more movies'''
     chromedriver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
     
-    '''Wait until the new set of movies are loaded, then load the new page_source'''
-    # time.sleep(2.0)
     html_after_scroll = chromedriver.page_source
 
     bs = BeautifulSoup(html_after_scroll)
     '''If there is no "Now Loading" on the page, then stop scrolling'''
     stop_scrolling = ( bs.find("div",{"class":"feed-loading","style":"display: block;"}) is None )
     if stop_scrolling: break     
+    
+    '''Scroll only one time for debug '''
     break
 
- 
 
 #***************************************************************************#
 #********************* After loading all the movies ************************#
@@ -58,7 +73,7 @@ for column in movie_columns:
     movies = column.findAll("dl",{"class":"dl_list"})
     for movie in movies:        
 
-        movie_name = movie.find("dd",{"class":"dd_cnt"}).find("p",{"class":"p_t"}).find("a").text
+        movie_name = movie.find("dd",{"class":"dd_cnt"}).find("p",{"class":"p_t"}).find("a").text        
 
         movie_data = movie.find("dd",{"class":"dd_cnt"}).find("p",{"class":["p_c ico_num"]})
 
@@ -80,7 +95,7 @@ for column in movie_columns:
 
         '''Put the data into a list of tuples for inserting into MYSQL database'''
         movie_views = movie_views.replace(",","")
-        movie_tuple = (1,2,0.0,0)
+        movie_tuple = (count,movie_name,float(movie_score),int(movie_views))
         movie_tuple_list.append(movie_tuple)
 
         '''Increment count at the very last of loop'''
@@ -89,21 +104,22 @@ for column in movie_columns:
 '''PRINT-OUT'''        
 print "Total: " + str(count)
 
+chromedriver.close() 
+
+
 #***************************************************************************#
 #********************* Insert into database ********************************#
 #***************************************************************************#        
 
 try:
     '''Insert all the data into database'''
-    insert_sql = """INSERT INTO LETV_MOVIE VALUES(%d,%s,%f,%d)"""    
+    insert_sql = """INSERT INTO LETV_MOVIE VALUES(%s,%s,%s,%s)"""    
     db_cursor.executemany(insert_sql,movie_tuple_list)  
     db.commit()
 except Exception ,err:
     db.rollback()
     print "Database has been rolled back because of an Exception !!!"
     print(traceback.format_exc())
-
-chromedriver.close() 
         
 
 
