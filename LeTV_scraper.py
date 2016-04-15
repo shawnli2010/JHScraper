@@ -9,30 +9,13 @@ import time
 import MySQLdb
 import traceback
 
-db = MySQLdb.connect("localhost","username","password","JHSDB" )
+db = MySQLdb.connect("localhost","root","0924xiaopan","JHSDB" )
 db_cursor = db.cursor()
 db_cursor.execute("SET NAMES UTF8")
 
 url = "http://list.le.com/listn/c1_t-1_a-1_y-1_s1_lg-1_ph-1_md_o3_d1_p.html"
 chromedriver = webdriver.Chrome()
 chromedriver.get(url)
-
-
-#***************************************************************************#
-#****** Database schema to create the table I use in mysql        **********#
-#***************************************************************************#
-
-####### QUERY #######
-'''Create the LeTV_Movie table'''
-create_letv_movie_table_sql = """CREATE TABLE LETV_MOVIE(
-                                        ID INT(11),
-                                        MOVIE_NAME CHAR(255), 
-                                        MOVIE_SCORE DOUBLE(2,1), 
-                                        MOVIE_VIEWS INT(11) )
-                                        ENGINE=InnoDB CHARACTER SET=utf8;"""
-####### EXECTUION #######
-'''Should execute only once to create the table'''
-# db_cursor.execute(create_letv_movie_table_sql)
 
 
 #***************************************************************************#
@@ -111,15 +94,15 @@ chromedriver.close()
 #********************* Insert into database ********************************#
 #***************************************************************************#        
 
-try:
-    '''Insert all the data into database'''
-    insert_sql = """INSERT INTO LETV_MOVIE VALUES(%s,%s,%s,%s)"""    
-    db_cursor.executemany(insert_sql,movie_tuple_list)  
-    db.commit()
-except Exception ,err:
-    db.rollback()
-    print "Database has been rolled back because of an Exception !!!"
-    print(traceback.format_exc())
+# try:
+#     '''Insert all the data into database'''
+#     insert_sql = """INSERT INTO LETV_MOVIE VALUES(%s,%s,%s,%s)"""    
+#     db_cursor.executemany(insert_sql,movie_tuple_list)  
+#     db.commit()
+# except Exception ,err:
+#     db.rollback()
+#     print "Database has been rolled back because of an Exception !!!"
+#     print(traceback.format_exc())
         
 
 
