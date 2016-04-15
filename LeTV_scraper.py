@@ -9,9 +9,9 @@ import time
 import MySQLdb
 import traceback
 
-db = MySQLdb.connect("localhost","root","0924xiaopan","JHSDB" )
+db = MySQLdb.connect(host = "localhost",user = "root",passwd = "0924xiaopan",db = "JHSDB",charset = "utf8mb4", use_unicode = True )
 db_cursor = db.cursor()
-db_cursor.execute("SET NAMES UTF8")
+db_cursor.execute("SET NAMES utf8mb4")
 
 url = "http://list.le.com/listn/c1_t-1_a-1_y-1_s1_lg-1_ph-1_md_o3_d1_p.html"
 chromedriver = webdriver.Chrome()
@@ -37,7 +37,7 @@ while(True):
     if stop_scrolling: break     
     
     '''Scroll only one time for debug '''
-    break
+    # break
 
 
 #***************************************************************************#
@@ -94,15 +94,15 @@ chromedriver.close()
 #********************* Insert into database ********************************#
 #***************************************************************************#        
 
-# try:
-#     '''Insert all the data into database'''
-#     insert_sql = """INSERT INTO LETV_MOVIE VALUES(%s,%s,%s,%s)"""    
-#     db_cursor.executemany(insert_sql,movie_tuple_list)  
-#     db.commit()
-# except Exception ,err:
-#     db.rollback()
-#     print "Database has been rolled back because of an Exception !!!"
-#     print(traceback.format_exc())
+try:
+    '''Insert all the data into database'''
+    insert_sql = """INSERT INTO LETV_MOVIE VALUES(%s,%s,%s,%s)"""    
+    db_cursor.executemany(insert_sql,movie_tuple_list)  
+    db.commit()
+except Exception ,err:
+    db.rollback()
+    print "Database has been rolled back because of an Exception !!!"
+    print(traceback.format_exc())
         
 
 
