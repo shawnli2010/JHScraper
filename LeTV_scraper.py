@@ -94,15 +94,15 @@ chromedriver.close()
 #********************* Insert into database ********************************#
 #***************************************************************************#        
 
-try:
-    '''Insert all the data into database'''
-    insert_sql = """INSERT INTO LETV_MOVIE VALUES(%s,%s,%s,%s)"""    
-    db_cursor.executemany(insert_sql,movie_tuple_list)  
-    db.commit()
-except Exception ,err:
-    db.rollback()
-    print "Database has been rolled back because of an Exception !!!"
-    print(traceback.format_exc())
+# try:
+#     '''Insert all the data into database'''
+#     insert_sql = """INSERT INTO LETV_MOVIE VALUES(%s,%s,%s,%s)"""    
+#     db_cursor.executemany(insert_sql,movie_tuple_list)  
+#     db.commit()
+# except Exception ,err:
+#     db.rollback()
+#     print "Database has been rolled back because of an Exception !!!"
+#     print(traceback.format_exc())
         
 
 
