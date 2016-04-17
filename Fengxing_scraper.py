@@ -41,6 +41,8 @@ def open_new_page(driver,url,timeout):
 #***************************************************************************#
 #*********************    Setup   ******************************************#
 #***************************************************************************#
+movie_list_page_timeout = 2
+movie_page_timeout = 2
 
 db = MySQLdb.connect("localhost","root","0924xiaopan","JHSDB" )
 db_cursor = db.cursor()
@@ -50,17 +52,18 @@ root_url = "http://www.fun.tv"
 movie_list_url = "http://www.fun.tv/retrieve/c-e794b5e5bdb1.n-e5bdb1e78987.o-sc.pg-1.uc-23"
 
 chromedriver = None
-DS_tuple = open_new_page(chromedriver,movie_list_url,2)
-time.sleep(2)
+DS_tuple = open_new_page(chromedriver,movie_list_url,movie_list_page_timeout)
+time.sleep(movie_list_page_timeout)
 chromedriver = DS_tuple[0]
 bsoup = DS_tuple[1]
 
 movie_list_div = bsoup.find("div",{"class":"mod-wrap-in mod-vd-lay-c6 fix"})
-first_movie_box = movie_list_div.find("div",{"class":"mod-vd-i first"})
+first_movie_box = movie_list_div.find("div",{"class":"mod-vd-i first  "})
 movie_boxes = movie_list_div.findAll("div",{"class":"mod-vd-i  "})
 movie_boxes.append(first_movie_box)
 
-for each_div in movie_boxes:
+count = 0
+for each_div in movie_boxes:    
     info_div = each_div.find("div",{"class":"info"})
     movie_name_text = info_div.find("a").text
     movie_score_text = info_div.find("b").text
@@ -68,36 +71,42 @@ for each_div in movie_boxes:
     sub_link_string = info_div.find("a")['href']
     movie_url = root_url + sub_link_string
 
-    DS_tuple = open_new_page(chromedriver,movie_url,3)
-    time.sleep(3)
+    movie_page_timeout_t = movie_page_timeout
+
+    '''(1) Open the individual movie page using the base timeout'''
+    DS_tuple = open_new_page(chromedriver,movie_url,movie_page_timeout_t)
+    time.sleep(movie_page_timeout_t)
     chromedriver = DS_tuple[0]
     bsoup = DS_tuple[1]
 
-    movie_view_text = bsoup.find("a",{"class":"exp-num"}).text
-    print movie_view_text
+    while(True):
 
+        movie_views_a = bsoup.find("a",{"class":"exp-num"})
 
-    # try:
-    #     chromedriver.get(movie_url)
-    # except Exception, exception:
-    #     if isinstance(exception, TimeoutException):
-    #         each_movie_html = chromedriver.page_source
-    #         bs = BeautifulSoup(each_movie_html)
-    #         movie_view_text = bs.find("a",{"class":"exp-num"}).text
+        '''(2) If the individual movie page is not loaded completely'''
+        if(movie_views_a is None):
+            movie_page_timeout_t = movie_page_timeout_t + 1
+            print "timeout incremented to " + str(movie_page_timeout_t) + " seconds for " + movie_name_text
+            
+            '''(3) If the timeout is too long, which means it might be a VIP movie without movie views available'''
+            if(movie_page_timeout_t > 6):
+                print "timeout too long"
+                movie_views_text = "0"
+                break
 
-    #         chromedriver.get(movie_list_url)
-    #     else:
-    #         print ("Some exception other than TimeoutException happened when open",
-    #                "each individual movie's page")
-    # '''Click into each movie to get the views of each movie'''
-    # movie_link = chromedriver.find_element_by_link_text(movie_name)
-    # movie_link.click()
-
-    # time.sleep(10)
-
-    # print chromedriver.page_source
+            DS_tuple = open_new_page(chromedriver,movie_url,movie_page_timeout_t)
+            time.sleep(movie_page_timeout_t)
+            chromedriver = DS_tuple[0]
+            bsoup = DS_tuple[1]            
+        else:
+            movie_views_text = movie_views_a.text
+            break
     
-    break
+    print str(count) + ". " + movie_name_text + movie_views_text
+
+    count = count + 1
+    
+    
 
           
 
