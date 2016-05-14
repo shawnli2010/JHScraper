@@ -19,7 +19,11 @@ def open_new_page(driver,url,timeout):
     if(driver is None): driver = webdriver.Chrome()
     driver.set_page_load_timeout(timeout)
     
-    try:
+    # old_page_html = driver.page_source
+    # new_page_html = ""
+
+    try:        
+        '''Most likely this driver.get() will spends more time than timeout'''
         driver.get(url)
         new_page_html = driver.page_source
         soup = BeautifulSoup(new_page_html)
@@ -29,8 +33,29 @@ def open_new_page(driver,url,timeout):
         return (driver,soup)
     except Exception, exception:
         if isinstance(exception, TimeoutException):
-            new_page_html = driver.page_source
-            soup = BeautifulSoup(new_page_html)        
+            print "first line of if isinstance():"
+            
+            # if(old_page_html == new_page_html):
+            #     print "THEY ARE EQUAL"
+
+            try:
+                print "first line of try"
+                new_page_html = driver.page_source
+                print "After new_page_html"
+                soup = BeautifulSoup(new_page_html)        
+                print "After soup"
+
+            except Exception, exception:
+                if isinstance(exception, TimeoutException):
+                    print "Timeout Exception happened when getting driver's page source"                    
+                else:
+                    print ("Some exception other than TimeoutException happened " +
+                            "getting driver's page source"  )
+                    print(traceback.format_exc())
+                
+                '''Failed to get the page source, re call this method on the same movie'''
+                return "Reopen"
+
         else:
             print ("Some exception other than TimeoutException happened when open" +
                    "the page: " + url )
@@ -43,6 +68,7 @@ def open_new_page(driver,url,timeout):
 #***************************************************************************#
 movie_list_page_timeout = 2
 movie_page_timeout = 2
+acceptable_timeout = 6
 
 db = MySQLdb.connect("localhost","root","0924xiaopan","JHSDB" )
 db_cursor = db.cursor()
@@ -76,6 +102,16 @@ for each_div in movie_boxes:
     '''(1) Open the individual movie page using the base timeout'''
     DS_tuple = open_new_page(chromedriver,movie_url,movie_page_timeout_t)
     time.sleep(movie_page_timeout_t)
+    page_content_not_fetched = isinstance(DS_tuple, str)
+
+    '''TODO: currently open_new_page() only returns one string'''
+    '''TODO: will need to check the content of the string in the future'''
+    while(page_content_not_fetched):
+        print "Refetch the page"
+        DS_tuple = open_new_page(chromedriver,movie_url,movie_page_timeout_t)
+        time.sleep(movie_page_timeout_t)
+        page_content_not_fetched = isinstance(DS_tuple, str)
+    
     chromedriver = DS_tuple[0]
     bsoup = DS_tuple[1]
 
@@ -89,20 +125,30 @@ for each_div in movie_boxes:
             print "timeout incremented to " + str(movie_page_timeout_t) + " seconds for " + movie_name_text
             
             '''(3) If the timeout is too long, which means it might be a VIP movie without movie views available'''
-            if(movie_page_timeout_t > 6):
+            if(movie_page_timeout_t > acceptable_timeout):
                 print "timeout too long"
                 movie_views_text = "0"
                 break
 
             DS_tuple = open_new_page(chromedriver,movie_url,movie_page_timeout_t)
             time.sleep(movie_page_timeout_t)
+            page_content_not_fetched = isinstance(DS_tuple, str)
+
+            '''TODO: currently open_new_page() only returns one string'''
+            '''TODO: will need to check the content of the string in the future'''
+            while(page_content_not_fetched):
+                print "Refetch the page lalala"
+                DS_tuple = open_new_page(chromedriver,movie_url,movie_page_timeout_t)
+                time.sleep(movie_page_timeout_t)
+                page_content_not_fetched = isinstance(DS_tuple, str)
+
             chromedriver = DS_tuple[0]
             bsoup = DS_tuple[1]            
         else:
             movie_views_text = movie_views_a.text
             break
     
-    print str(count) + ". " + movie_name_text + movie_views_text
+    print str(count) + ". " + movie_name_text + ' ' + movie_views_text
 
     count = count + 1
     
