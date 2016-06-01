@@ -17,44 +17,42 @@ import traceback
 def open_new_page(driver,url,timeout):
 
     if(driver is None): driver = webdriver.Chrome()
+    
+    '''In order to avoid spending too much time on loading the page completely'''
     driver.set_page_load_timeout(timeout)
     
-    # old_page_html = driver.page_source
-    # new_page_html = ""
-
     try:        
         '''Most likely this driver.get() will spends more time than timeout'''
         driver.get(url)
-        new_page_html = driver.page_source
-        soup = BeautifulSoup(new_page_html)
+        page_html = driver.page_source
+        soup = BeautifulSoup(page_html)
 
         print "Timeout value: " + str(timeout) + " might be larger than needed"        
 
         return (driver,soup)
     except Exception, exception:
         if isinstance(exception, TimeoutException):
-            print "first line of if isinstance():"
             
-            # if(old_page_html == new_page_html):
-            #     print "THEY ARE EQUAL"
+            page_content_not_fetched = True
+            while(page_content_not_fetched):
 
-            try:
-                print "first line of try"
-                new_page_html = driver.page_source
-                print "After new_page_html"
-                soup = BeautifulSoup(new_page_html)        
-                print "After soup"
+                try:
+                    # driver.page_source will throw timeout exception occasionally
+                    # have not figured out why
+                    page_html = driver.page_source
+                    soup = BeautifulSoup(page_html)
+                    page_content_not_fetched = False        
 
-            except Exception, exception:
-                if isinstance(exception, TimeoutException):
-                    print "Timeout Exception happened when getting driver's page source"                    
-                else:
-                    print ("Some exception other than TimeoutException happened " +
-                            "getting driver's page source"  )
-                    print(traceback.format_exc())
-                
-                '''Failed to get the page source, re call this method on the same movie'''
-                return "Reopen"
+                except Exception, exception:
+                    print "TimeoutException is raised by driver.page_source"
+                    
+                    if not isinstance(exception, TimeoutException):
+
+                        print ("Some exception other than TimeoutException happened " +
+                                "getting driver's page source"  )
+                        print(traceback.format_exc())
+                    
+                    '''Failed to get the page source, re call this method on the same movie'''
 
         else:
             print ("Some exception other than TimeoutException happened when open" +
@@ -76,6 +74,10 @@ db_cursor.execute("SET NAMES UTF8")
 
 root_url = "http://www.fun.tv"
 movie_list_url = "http://www.fun.tv/retrieve/c-e794b5e5bdb1.n-e5bdb1e78987.o-sc.pg-1.uc-23"
+
+#***************************************************************************#
+#*********************    Start Scraping ***********************************#
+#***************************************************************************#
 
 chromedriver = None
 DS_tuple = open_new_page(chromedriver,movie_list_url,movie_list_page_timeout)
