@@ -53,6 +53,7 @@ def open_new_page(driver,url,timeout):
                         print(traceback.format_exc())
                     
                     '''Failed to get the page source, re call this method on the same movie'''
+                    return "Reopen"
 
         else:
             print ("Some exception other than TimeoutException happened when open" +
