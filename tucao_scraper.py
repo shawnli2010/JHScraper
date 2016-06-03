@@ -34,8 +34,8 @@ while(True):
 
     bs = BeautifulSoup(html_after_scroll)
     '''If there is no "Now Loading" on the page, then stop scrolling'''
-    next_page_link = bs.find("a", {"class":"page next S_txt1 S_line1"}) 
-    if next_page_link: 
+    b_next_page_link = bs.find("a", {"class":"page next S_txt1 S_line1"}) 
+    if b_next_page_link: 
         print "stop scolling"
         break     
 
@@ -44,3 +44,20 @@ print page_number_link.text;
 
 s_next_page_link =  chromedriver.find_element_by_link_text("下一页")   
 s_next_page_link.click()
+chromedriver.implicitly_wait(10)
+
+login_tab_link = chromedriver.find_element_by_link_text("账号登录")
+login_tab_link.click()
+
+if(login_tab_link):
+    print "y"
+else:
+    print "n"
+ 
+login_tab_link_d = chromedriver.find_element_by_link_text("账号登录d")
+if(login_tab_link_d):
+    print "yd"
+else:
+    print "nd"    
+
+
